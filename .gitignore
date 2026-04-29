@@ -1,0 +1,21 @@
+# Build output
+build/
+dist/
+*.AppImage
+*.AppDir/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
