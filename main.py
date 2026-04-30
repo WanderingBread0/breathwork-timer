@@ -50,6 +50,17 @@ RADIUS_MIN  = 70
 RADIUS_MAX  = 165
 TICK_MS     = 33
 
+# Morning Rise (Wim Hof) breath cadence: deep inhale, passive let-go exhale.
+MR_INHALE_S        = 3.5
+MR_EXHALE_S        = 2.2
+MR_RECOVERY_HOLD_S = 15.0
+MR_BREATHS         = 30
+
+# Deep Calm (4-7-8) cadence.
+DC_INHALE_S = 4.0
+DC_HOLD_S   = 7.0
+DC_EXHALE_S = 8.0
+
 
 def lerp(a, b, t):
     return a + (b - a) * t
@@ -218,9 +229,9 @@ class BreathworkApp:
         self.running = True
         self.start_btn.configure(text="Pause")
         if self.technique == "morning_rise":
-            self._enter_phase("inhale", 1.5, RADIUS_MIN, RADIUS_MAX)
+            self._enter_phase("inhale", MR_INHALE_S, RADIUS_MIN, RADIUS_MAX)
         else:
-            self._enter_phase("inhale", 4.0, RADIUS_MIN, RADIUS_MAX)
+            self._enter_phase("inhale", DC_INHALE_S, RADIUS_MIN, RADIUS_MAX)
         self._tick()
 
     def _enter_phase(self, name, duration, r_from, r_to):
@@ -239,34 +250,34 @@ class BreathworkApp:
 
     def _next_morning_rise(self):
         if self.phase == "inhale":
-            self._enter_phase("exhale", 1.5, RADIUS_MAX, RADIUS_MIN)
+            self._enter_phase("exhale", MR_EXHALE_S, RADIUS_MAX, RADIUS_MIN)
         elif self.phase == "exhale":
             self.breath_idx += 1
-            if self.breath_idx < 30:
-                self._enter_phase("inhale", 1.5, RADIUS_MIN, RADIUS_MAX)
+            if self.breath_idx < MR_BREATHS:
+                self._enter_phase("inhale", MR_INHALE_S, RADIUS_MIN, RADIUS_MAX)
             else:
                 self.exhale_hold_elapsed = 0.0
                 self._enter_phase("exhale_hold", 0.0, RADIUS_MIN, RADIUS_MIN)
         elif self.phase == "exhale_hold":
-            self._enter_phase("inhale_hold", 15.0, RADIUS_MAX, RADIUS_MAX)
+            self._enter_phase("inhale_hold", MR_RECOVERY_HOLD_S, RADIUS_MAX, RADIUS_MAX)
             self.radius_now = RADIUS_MAX
         elif self.phase == "inhale_hold":
             if self.round_idx < TECHNIQUES["morning_rise"]["rounds"]:
                 self.round_idx += 1
                 self.breath_idx = 0
-                self._enter_phase("inhale", 1.5, RADIUS_MIN, RADIUS_MAX)
+                self._enter_phase("inhale", MR_INHALE_S, RADIUS_MIN, RADIUS_MAX)
             else:
                 self._finish()
 
     def _next_deep_calm(self):
         if self.phase == "inhale":
-            self._enter_phase("hold", 7.0, RADIUS_MAX, RADIUS_MAX)
+            self._enter_phase("hold", DC_HOLD_S, RADIUS_MAX, RADIUS_MAX)
         elif self.phase == "hold":
-            self._enter_phase("exhale", 8.0, RADIUS_MAX, RADIUS_MIN)
+            self._enter_phase("exhale", DC_EXHALE_S, RADIUS_MAX, RADIUS_MIN)
         elif self.phase == "exhale":
             if self.round_idx < TECHNIQUES["deep_calm"]["rounds"]:
                 self.round_idx += 1
-                self._enter_phase("inhale", 4.0, RADIUS_MIN, RADIUS_MAX)
+                self._enter_phase("inhale", DC_INHALE_S, RADIUS_MIN, RADIUS_MAX)
             else:
                 self._finish()
 
@@ -339,14 +350,14 @@ class BreathworkApp:
         self._draw_circle(cx, cy, int(self.radius_now), t["circle_hi"], t["accent"])
 
         phase_label, countdown_text, hint = self._phase_text()
-        self.canvas.create_text(cx, cy - 38, text=phase_label,
+        self.canvas.create_text(cx, cy - 56, text=phase_label,
                                 font=self.f_phase, fill=t["accent"])
-        self.canvas.create_text(cx, cy + 20, text=countdown_text,
+        self.canvas.create_text(cx, cy, text=countdown_text,
                                 font=self.f_count, fill=t["text"])
 
         if self.technique == "morning_rise" and self.phase in ("inhale", "exhale"):
-            self.canvas.create_text(cx, cy + 70,
-                                    text=f"Breath {self.breath_idx + 1} / 30",
+            self.canvas.create_text(cx, cy + 56,
+                                    text=f"Breath {self.breath_idx + 1} / {MR_BREATHS}",
                                     font=self.f_hint, fill=t["text_dim"])
 
         self.round_lbl.configure(text=f"Round {self.round_idx} / {rounds}")
